@@ -3,11 +3,15 @@ import numpy as np
 
 class SupportVectorMachine():
 
-    def __init__(self, learning_rate, epochs, lambda_parameter):
+    def __init__(self, learning_rate, epochs, lambda_parameter, decay=0.):
         '''Initializing the classifier model with superparameters'''
+
         self.learning_rate = learning_rate
         self.epochs = epochs
         self.lambda_parameter = lambda_parameter
+        self.decay = decay
+        self.current_learning_rate = learning_rate
+        self.iterations = 0
 
     def fit(self, X, y):
         '''Fitting the model with training parameters'''
@@ -28,10 +32,14 @@ class SupportVectorMachine():
             self.update_params()
             prediction = self.predict(X)
             accuracy = np.mean(prediction == y)
-            print(f"accuracy on epoch {epoch}= ", accuracy)
+            print(f"accuracy on epoch {epoch}= ", f'{accuracy:4f}')
 
     def update_params(self):
         '''Updates weights and bias of the model'''
+
+        if self.decay:
+            self.current_learning_rate = self.learning_rate * \
+                (1./(1+self.decay*self.iterations))
 
         # gradients ( dw, db)
         for index, x_i in enumerate(self.X):
@@ -49,6 +57,8 @@ class SupportVectorMachine():
             self.w = self.w - self.learning_rate * dw
             self.b = self.b - self.learning_rate * db
 
+        self.iterations += 1
+
     def predict(self, X):
         '''predict the label for a given input'''
 
@@ -62,13 +72,14 @@ class SupportVectorMachine():
         self.w_plus = []
         self.b_plus = []
         for label in self.labels:
+            self.iterations=0
+            self.current_learning_rate=self.learning_rate
             print('Training class:', label)
             y_maksed = np.where(y == label, 1, -1)
             X_balanced, y_balanced = self.balance_data(X, y_maksed)
             self.fit(X_balanced, y_balanced)
             self.w_plus.append(self.w)
             self.b_plus.append(self.b)
-
             self.w = np.zeros(0)
             self.b = 0
             self.X = None

@@ -94,8 +94,7 @@ choice = input("select a model to proceed-")
 if choice == 'svm':
     # Initializing the SVM model with hyper-parameters
     model = SupportVectorMachine(
-        learning_rate=0.0001, epochs=100, lambda_parameter=0.0002)
-
+        learning_rate=0.0001, epochs=40, lambda_parameter=0.0002,decay=1e-4)
 elif choice == 'nn':
     # Initializing the NN model with hyper-parameters
     model = NeuralNetwork(learning_rate=0.90, decay=1e-3, momentum=1.2,

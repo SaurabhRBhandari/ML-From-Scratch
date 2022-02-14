@@ -98,8 +98,8 @@ if choice == 'svm':
         learning_rate=0.0001, epochs=15, lambda_parameter=0.0001, decay=0.00104)
 elif choice == 'nn':
     # Initializing the NN model with hyper-parameters
-    model = NeuralNetwork(learning_rate=0.11, decay=0.00104, momentum=1.0,
-                          epochs=15, batch_size=128, n_inputs=1024, n_neurons=64, n_outputs=10)
+    model = NeuralNetwork(learning_rate=0.159, decay=3.3e-4, momentum=1.1,
+                          epochs=15, batch_size=64, n_inputs=1024, n_neurons=64, n_outputs=10)
 
 print(f'Training the {choice} model..')
 

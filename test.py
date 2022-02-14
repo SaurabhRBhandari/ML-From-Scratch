@@ -10,7 +10,6 @@ labels = dict(zip(range(0, 10), df['label'].unique()))
 
 # TODO: The svm model works only for 2 labels, enhance to include all
 print(labels)
-labels = {0: 'frog', 1: 'truck'}
 
 
 def load_dataset(dataset, path, df):
@@ -44,16 +43,13 @@ def create_data(path):
     X0 = X0[keys]
     y0 = y0[keys]
 
-    # TODO:remove this when implementing for multiple labels
-    y0 = np.where(y0 <= 0, -1, 1)
-
     # Training data
-    X = X0[:8000]
-    y = y0[:8000]
+    X = X0[:40000]
+    y = y0[:40000]
 
     # Testing data
-    X_test = X0[8000:]
-    y_test = y0[8000:]
+    X_test = X0[40000:]
+    y_test = y0[40000:]
 
     return X, y, X_test, y_test
 
@@ -65,19 +61,20 @@ print(np.count_nonzero(y))
 
 # Initializing the model with super-parameters
 model = SupportVectorMachine(
-    learning_rate=0.0001, epochs=10, lambda_parameter=0.02)
+    learning_rate=0.0001, epochs=100, lambda_parameter=0.0002)
 
 # Training the model to fit cifar-10 data
-model.fit(X, y)
+model.fit_plus(X, y)
+
 
 # Model Evaluation
 
 # accuracy on training data
-X_train_prediction = model.predict(X)
+X_train_prediction = model.predict_plus(X)
 training_data_accuracy = np.mean(X_train_prediction == y)
 
 # accuracy on testing data
-X_test_prediction = model.predict(X_test)
+X_test_prediction = model.predict_plus(X_test)
 testing_data_accuracy = np.mean(X_test_prediction == y_test)
 
 print("accuracy on training data ", training_data_accuracy)

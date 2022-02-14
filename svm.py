@@ -56,3 +56,54 @@ class SupportVectorMachine():
         y = np.sign(output)
 
         return y
+
+    def fit_plus(self, X, y):
+        self.labels = np.unique(y)
+        self.w_plus = []
+        self.b_plus = []
+        for label in self.labels:
+            print('Training class:', label)
+            y_maksed = np.where(y == label, 1, -1)
+            X_balanced, y_balanced = self.balance_data(X, y_maksed)
+            self.fit(X_balanced, y_balanced)
+            self.w_plus.append(self.w)
+            self.b_plus.append(self.b)
+
+            self.w = np.zeros(0)
+            self.b = 0
+            self.X = None
+            self.y = None
+            y_masked = None
+
+    def predict_plus(self, X):
+        prediction_plus = []
+        for x in X:
+            x_detected = False
+            x_probs = []
+            for index, w in enumerate(self.w_plus):
+                self.w = w
+                self.b = self.b_plus[index]
+                x_probs.append(np.dot(x, self.w) - self.b)
+            prediction_plus.append(x_probs.index(max(x_probs)))
+
+        return np.array(prediction_plus)
+
+    def balance_data(self, X, y):
+        size_minority = np.count_nonzero(y == 1)
+
+        X_plus = X[y == 1]
+        X_minus = X[y == -1]
+
+        X_minus = X_minus[:size_minority]
+
+        X_copy = np.concatenate((X_plus, X_minus))
+        y_copy = np.concatenate((np.full(shape=(size_minority,), fill_value=1),
+                                 np.full(shape=(size_minority,), fill_value=-1)))
+
+        # It's necessary to shuffle the data for accurate training
+        keys = np.array(range(X_copy.shape[0]))
+        np.random.shuffle(keys)
+        X_balanced = X_copy[keys]
+        y_balanced = y_copy[keys]
+
+        return X_balanced, y_balanced

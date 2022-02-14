@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
+
 # reading the labels of data
 df = pd.read_csv("cifar-10/trainLabels.csv")
 labels = dict(zip(range(0, 10), df['label'].unique()))
@@ -94,11 +95,11 @@ choice = input("select a model to proceed-")
 if choice == 'svm':
     # Initializing the SVM model with hyper-parameters
     model = SupportVectorMachine(
-        learning_rate=0.0001, epochs=40, lambda_parameter=0.0002,decay=1e-4)
+        learning_rate=0.0001, epochs=15, lambda_parameter=0.0001, decay=0.00104)
 elif choice == 'nn':
     # Initializing the NN model with hyper-parameters
-    model = NeuralNetwork(learning_rate=0.90, decay=1e-3, momentum=1.2,
-                          epochs=20, batch_size=128, n_inputs=1024, n_neurons=64, n_outputs=10)
+    model = NeuralNetwork(learning_rate=0.11, decay=0.00104, momentum=1.0,
+                          epochs=15, batch_size=128, n_inputs=1024, n_neurons=64, n_outputs=10)
 
 print(f'Training the {choice} model..')
 

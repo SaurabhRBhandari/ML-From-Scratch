@@ -32,7 +32,7 @@ class SupportVectorMachine():
             self.update_params()
             prediction = self.predict(X)
             accuracy = np.mean(prediction == y)
-            print(f"accuracy on epoch {epoch}= ", f'{accuracy:4f}')
+            #print(f"accuracy on epoch {epoch}= ", f'{accuracy:4f}')
 
     def update_params(self):
         '''Updates weights and bias of the model'''

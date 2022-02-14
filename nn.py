@@ -12,11 +12,12 @@ class NeuralNetwork:
         self.dense1 = Layer_Dense(n_inputs, n_neurons)
         self.dense2 = Layer_Dense(n_neurons, n_outputs)
         self.activation1 = Activation_ReLU()
+        self.activation2=Activation_Softmax()
         self.loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
         self.optimizer = Optimizer_SGD(
             self.learning_rate, self.decay, self.momentum)
 
-    def fit(self, X, y):
+    def fit_plus(self, X, y):
         self.X = X
         self.y = y
 
@@ -59,16 +60,13 @@ class NeuralNetwork:
         
         print('Training Accuracy:',accuracy)
 
-    def test(self, X_test, y_test):
+    def predict_plus(self, X_test):
         self.dense1.forward(X_test)
         self.activation1.forward(self.dense1.output)
         self.dense2.forward(self.activation1.output)
-        self.loss_activation.forward(self.dense2.output,y_test)
-        predictions = np.argmax(self.loss_activation.output, axis=1)
-        if len(y_test.shape) == 2:
-            y_test = np.argmax(y_test, axis=1)
-        accuracy = np.mean(predictions == y_test)
-        print(f'testing accuracy:{accuracy:3f}')
+        self.activation2.forward(self.dense2.output)
+        predictions = np.argmax(self.activation2.output, axis=1)
+        return predictions
 
 
 class Layer_Dense:

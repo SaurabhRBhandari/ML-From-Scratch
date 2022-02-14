@@ -9,7 +9,6 @@ import pandas as pd
 df = pd.read_csv("cifar-10/trainLabels.csv")
 labels = dict(zip(range(0, 10), df['label'].unique()))
 
-# TODO: The svm model works only for 2 labels, enhance to include all
 print(labels)
 
 
@@ -58,34 +57,28 @@ def create_data(path):
 # Create testing and training data
 X, y, X_test, y_test = create_data('cifar-10')
 
-
-def run_svm():
+choice = input("select a model")
+if choice == 'svm':
     # Initializing the model with super-parameters
     model = SupportVectorMachine(
         learning_rate=0.0001, epochs=100, lambda_parameter=0.0002)
 
-    # Training the model to fit cifar-10 data
-    model.fit_plus(X, y)
-
-    # Model Evaluation
-
-    # accuracy on training data
-    X_train_prediction = model.predict_plus(X)
-    training_data_accuracy = np.mean(X_train_prediction == y)
-
-    # accuracy on testing data
-    X_test_prediction = model.predict_plus(X_test)
-    testing_data_accuracy = np.mean(X_test_prediction == y_test)
-
-    print("accuracy on training data ", training_data_accuracy)
-    print("accuracy on testing data ", testing_data_accuracy)
-
-
-def run_nn():
+elif choice == 'nn':
     model = NeuralNetwork(learning_rate=0.90, decay=1e-3, momentum=1.2,
                           epochs=20, batch_size=128, n_inputs=1024, n_neurons=64, n_outputs=10)
-    model.fit(X, y)
-    model.test(X_test, y_test)
 
-run_svm()
-run_nn()
+# Training the model to fit cifar-10 data
+model.fit_plus(X, y)
+
+# Model Evaluation
+
+# accuracy on training data
+X_train_prediction = model.predict_plus(X)
+training_data_accuracy = np.mean(X_train_prediction == y)
+
+# accuracy on testing data
+X_test_prediction = model.predict_plus(X_test)
+testing_data_accuracy = np.mean(X_test_prediction == y_test)
+
+print("accuracy on training data ", training_data_accuracy)
+print("accuracy on testing data ", testing_data_accuracy)

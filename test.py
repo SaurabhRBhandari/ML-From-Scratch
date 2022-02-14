@@ -1,4 +1,5 @@
 from svm import SupportVectorMachine
+from nn import NeuralNetwork
 import os
 import cv2
 import numpy as np
@@ -56,26 +57,35 @@ def create_data(path):
 
 # Create testing and training data
 X, y, X_test, y_test = create_data('cifar-10')
-print(np.count_nonzero(y))
 
 
-# Initializing the model with super-parameters
-model = SupportVectorMachine(
-    learning_rate=0.0001, epochs=100, lambda_parameter=0.0002)
+def run_svm():
+    # Initializing the model with super-parameters
+    model = SupportVectorMachine(
+        learning_rate=0.0001, epochs=100, lambda_parameter=0.0002)
 
-# Training the model to fit cifar-10 data
-model.fit_plus(X, y)
+    # Training the model to fit cifar-10 data
+    model.fit_plus(X, y)
+
+    # Model Evaluation
+
+    # accuracy on training data
+    X_train_prediction = model.predict_plus(X)
+    training_data_accuracy = np.mean(X_train_prediction == y)
+
+    # accuracy on testing data
+    X_test_prediction = model.predict_plus(X_test)
+    testing_data_accuracy = np.mean(X_test_prediction == y_test)
+
+    print("accuracy on training data ", training_data_accuracy)
+    print("accuracy on testing data ", testing_data_accuracy)
 
 
-# Model Evaluation
+def run_nn():
+    model = NeuralNetwork(learning_rate=0.90, decay=1e-3, momentum=1.2,
+                          epochs=20, batch_size=128, n_inputs=1024, n_neurons=64, n_outputs=10)
+    model.fit(X, y)
+    model.test(X_test, y_test)
 
-# accuracy on training data
-X_train_prediction = model.predict_plus(X)
-training_data_accuracy = np.mean(X_train_prediction == y)
-
-# accuracy on testing data
-X_test_prediction = model.predict_plus(X_test)
-testing_data_accuracy = np.mean(X_test_prediction == y_test)
-
-print("accuracy on training data ", training_data_accuracy)
-print("accuracy on testing data ", testing_data_accuracy)
+run_svm()
+run_nn()

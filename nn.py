@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.metrics import DetCurveDisplay
 
 
 class NeuralNetwork:
@@ -125,14 +124,19 @@ class Layer_Dense:
         '''Called during backward pass'''
 
         # dvalues is the derivative from the next layer
-
+    
+        #v=w*i+b
+        #differentiate wrt weights
+        #dv=i*dw   
         self.dweights = np.dot(self.inputs.T, dvalues)
 
         # v=w*i+b
+        # partially differentiate wrt b
         # dv=db
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
 
         # v=w*i+b
+        #partially differentiate wrt i
         # dv=w*di
         self.dinputs = np.dot(dvalues, self.weights.T)
 
@@ -269,22 +273,22 @@ class Optimizer_SGD:
                 # weight_change = momentum_factor*weight_momentum - learning_rate*dweights
                 weight_updates = self.momentum*layer.weight_momentums - \
                     self.current_learning_rate*layer.dweights
-                
-                #momentum is proportional to speed analogy
+
+                # momentum is proportional to speed analogy
                 layer.weight_momentums = weight_updates
 
                 # bias_change = momentum_factor*bias_momentum - learning_rate*dbiases
                 bias_updates = self.momentum*layer.bias_momentums - \
                     self.current_learning_rate*layer.dbiases
-                
-                #momentum is proportional to speed analogy
+
+                # momentum is proportional to speed analogy
                 layer.bias_momentums = bias_updates
 
         else:
             weight_updates = -self.current_learning_rate*layer.dweights
             bias_updates = -self.current_learning_rate*layer.dbiases
 
-        #update weights and biases
+        # update weights and biases
         layer.weights += weight_updates
         layer.biases += bias_updates
 

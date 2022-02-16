@@ -4,20 +4,27 @@ from sklearn.metrics import DetCurveDisplay
 
 class NeuralNetwork:
     def __init__(self, learning_rate, decay, momentum, epochs, batch_size, n_inputs, n_neurons, n_outputs):
+        '''Initializes the parameters of NN'''
         self.learning_rate = learning_rate
         self.decay = decay
         self.momentum = momentum
         self.epochs = epochs
         self.batch_size = batch_size
+
         self.dense1 = Layer_Dense(n_inputs, n_neurons)
         self.dense2 = Layer_Dense(n_neurons, n_outputs)
+
         self.activation1 = Activation_ReLU()
-        self.activation2=Activation_Softmax()
+        self.activation2 = Activation_Softmax()
+
         self.loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+
         self.optimizer = Optimizer_SGD(
             self.learning_rate, self.decay, self.momentum)
 
     def fit_plus(self, X, y):
+        '''Train the model with input data'''
+
         self.X = X
         self.y = y
 
@@ -35,13 +42,11 @@ class NeuralNetwork:
 
                 self.dense2.forward(self.activation1.output)
 
-                loss = self.loss_activation.forward(
-                    self.dense2.output, batch_y)
+                self.loss_activation.forward(self.dense2.output, batch_y)
 
                 predictions = np.argmax(self.loss_activation.output, axis=1)
                 if len(batch_y.shape) == 2:
                     batch_y = np.argmax(y, axis=1)
-                accuracy = np.mean(predictions == batch_y)
 
                 self.loss_activation.backward(
                     self.loss_activation.output, batch_y)
@@ -55,54 +60,75 @@ class NeuralNetwork:
                 self.optimizer.post_update_params()
 
             print(f'epoch: {epoch}')
-            print(f'acc :{accuracy:.3f}')
-            print(f'loss :{loss}')
-        
-        print('Training Accuracy:',accuracy)
+            #print(f'acc :{accuracy:.3f}')
+            #print(f'loss :{loss}')
 
     def predict_plus(self, X_test):
+        '''Predict the label for a given set of input images'''
+
         self.dense1.forward(X_test)
         self.activation1.forward(self.dense1.output)
         self.dense2.forward(self.activation1.output)
         self.activation2.forward(self.dense2.output)
+
         predictions = np.argmax(self.activation2.output, axis=1)
+
         return predictions
 
 
 class Layer_Dense:
+    '''A layer of neurons'''
+
     def __init__(self, n_inputs, n_neurons):
+        '''Initializes the parameters of a layer'''
+
         self.weights = 0.10*np.random.randn(n_inputs, n_neurons)
         self.biases = np.zeros((1, n_neurons))
 
     def forward(self, inputs):
+        '''Called during forward pass'''
+
         self.inputs = inputs
         self.output = np.dot(inputs, self.weights)+self.biases
 
     def backward(self, dvalues):
+        '''Called during backward pass'''
+
         self.dweights = np.dot(self.inputs.T, dvalues)
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
         self.dinputs = np.dot(dvalues, self.weights.T)
 
 
 class Activation_ReLU:
+    '''ReLU activation funmction'''
+
     def forward(self, inputs):
+        '''Called suring forward pass'''
+
         self.inputs = inputs
         self.output = np.maximum(0, inputs)
 
     def backward(self, dvalues):
-        self.dinputs = dvalues.copy()
+        '''Called during backward pass'''
 
+        self.dinputs = dvalues.copy()
         self.dinputs[self.inputs <= 0] = 0
 
 
 class Activation_Softmax:
+    '''SoftMax activation function'''
+
     def forward(self, inputs):
+        '''Called during forward pass'''
+
         self.inputs = inputs
         exp_values = np.exp(inputs-np.max(inputs, axis=1, keepdims=True))
         probabilities = exp_values/np.sum(exp_values, axis=1, keepdims=True)
         self.output = probabilities
 
     def backward(self, dvalues):
+        '''Called during backward pass'''
+
         self.dinputs = np.empty_like(dvalues)
 
         for index, (single_output, single_dvalues) in enumerate(zip(self.output, dvalues)):
@@ -112,15 +138,26 @@ class Activation_Softmax:
             self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 
-class Loss:
+# class Loss:
+#    def calculate(self, output, y):
+#       sample_losses = self.forward(output, y)
+#        data_loss = np.mean(sample_losses)
+#        return data_loss
+
+
+class Loss_CategoricalCrossentropy():
+    '''Loss Function'''
+
     def calculate(self, output, y):
+        '''Calculate the loss'''
+
         sample_losses = self.forward(output, y)
         data_loss = np.mean(sample_losses)
         return data_loss
 
-
-class Loss_CategoricalCrossentropy(Loss):
     def forward(self, y_pred, y_true):
+        '''Call during forward pass'''
+
         samples = len(y_pred)
         y_pred_clipped = np.clip(y_pred, 1e-7, 1-1e-7)
 
@@ -134,6 +171,8 @@ class Loss_CategoricalCrossentropy(Loss):
         return neg_log_likelihoods
 
     def backward(self, dvalues, y_true):
+        '''Call during backward pass'''
+
         samples = len(dvalues)
         labels = len(dvalues[0])
 
@@ -145,16 +184,23 @@ class Loss_CategoricalCrossentropy(Loss):
 
 
 class Activation_Softmax_Loss_CategoricalCrossentropy():
+    '''The softmax activation is applied just before the output layer,and same with  loss function,so the two are clubbed together to increase 
+    efficiency'''
+
     def __init__(self):
         self.activation = Activation_Softmax()
         self.loss = Loss_CategoricalCrossentropy()
 
     def forward(self, inputs, y_true):
+        '''Called during forward pass'''
+
         self.activation.forward(inputs)
         self.output = self.activation.output
         return self.loss.calculate(self.output, y_true)
 
     def backward(self, dvalues, y_true):
+        '''Called during backward pass'''
+
         samples = len(dvalues)
         if len(y_true.shape) == 2:
             y_true = np.argmax(y_true, axis=1)
@@ -165,6 +211,8 @@ class Activation_Softmax_Loss_CategoricalCrossentropy():
 
 
 class Optimizer_SGD:
+    ''''The optimizer updates the weights and biases in direction of reducing loss'''
+
     def __init__(self, learning_rate=1., decay=0., momentum=0.):
         self.learning_rate = learning_rate
         self.current_learning_rate = learning_rate
@@ -173,11 +221,15 @@ class Optimizer_SGD:
         self.momentum = momentum
 
     def pre_update_params(self):
+        '''Runs before updating parameters'''
+
         if self.decay:
             self.current_learning_rate = self.learning_rate * \
                 (1./(1+self.decay*self.iterations))
 
     def update_params(self, layer):
+        '''Update the weights and biases of the given layer'''
+
         if self.momentum:
             if not hasattr(layer, 'weight_momentum'):
                 layer.weight_momentums = np.zeros_like(layer.weights)
@@ -199,4 +251,5 @@ class Optimizer_SGD:
             layer.biases += bias_updates
 
     def post_update_params(self):
+        '''Runs after updating params'''
         self.iterations += 1

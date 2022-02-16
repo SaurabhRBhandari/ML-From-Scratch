@@ -5,20 +5,28 @@ from sklearn.metrics import DetCurveDisplay
 class NeuralNetwork:
     def __init__(self, learning_rate, decay, momentum, epochs, batch_size, n_inputs, n_neurons, n_outputs):
         '''Initializes the parameters of NN'''
+
+        # these parameters are used by the optimizer
         self.learning_rate = learning_rate
         self.decay = decay
         self.momentum = momentum
+
+        # these parameters are used by fit_plus
         self.epochs = epochs
         self.batch_size = batch_size
 
+        # the neural layers
         self.dense1 = Layer_Dense(n_inputs, n_neurons)
         self.dense2 = Layer_Dense(n_neurons, n_outputs)
 
+        # the activation functions
         self.activation1 = Activation_ReLU()
         self.activation2 = Activation_Softmax()
 
-        self.loss_activation = Activation_Softmax_Loss_CategoricalCrossentropy()
+        # the loss function
+        self.loss = Loss()
 
+        # the optimizer
         self.optimizer = Optimizer_SGD(
             self.learning_rate, self.decay, self.momentum)
 
@@ -28,40 +36,42 @@ class NeuralNetwork:
         self.X = X
         self.y = y
 
+        #Calculate the number of train steps required for each epoch
         train_steps = X.shape[0]//self.batch_size
         if train_steps*self.batch_size < X.shape[0]:
             train_steps += 1
 
         for epoch in range(self.epochs):
             for step in range(train_steps):
+
+                # Divide the data into batches,for faster processing
                 batch_X = X[step*self.batch_size:(step+1)*self.batch_size]
                 batch_y = y[step*self.batch_size:(step+1)*self.batch_size]
+
+                # Perform forward pass
                 self.dense1.forward(batch_X)
-
                 self.activation1.forward(self.dense1.output)
-
                 self.dense2.forward(self.activation1.output)
+                self.activation2.forward(self.dense2.output)
 
-                self.loss_activation.forward(self.dense2.output, batch_y)
-
-                predictions = np.argmax(self.loss_activation.output, axis=1)
+                # there are two ways to pass true_labels,using one hot vectors and normally
                 if len(batch_y.shape) == 2:
                     batch_y = np.argmax(y, axis=1)
 
-                self.loss_activation.backward(
-                    self.loss_activation.output, batch_y)
-                self.dense2.backward(self.loss_activation.dinputs)
+                # Perform backward pass
+                self.loss.backward(self.activation2.output, batch_y)
+                self.activation2.backward(self.loss.dinputs)
+                self.dense2.backward(self.activation2.dinputs)
                 self.activation1.backward(self.dense2.dinputs)
                 self.dense1.backward(self.activation1.dinputs)
 
+                # update weights and biases
                 self.optimizer.pre_update_params()
                 self.optimizer.update_params(self.dense1)
                 self.optimizer.update_params(self.dense2)
                 self.optimizer.post_update_params()
 
             print(f'epoch: {epoch}')
-            #print(f'acc :{accuracy:.3f}')
-            #print(f'loss :{loss}')
 
     def predict_plus(self, X_test):
         '''Predict the label for a given set of input images'''
@@ -138,37 +148,8 @@ class Activation_Softmax:
             self.dinputs[index] = np.dot(jacobian_matrix, single_dvalues)
 
 
-# class Loss:
-#    def calculate(self, output, y):
-#       sample_losses = self.forward(output, y)
-#        data_loss = np.mean(sample_losses)
-#        return data_loss
-
-
-class Loss_CategoricalCrossentropy():
+class Loss():
     '''Loss Function'''
-
-    def calculate(self, output, y):
-        '''Calculate the loss'''
-
-        sample_losses = self.forward(output, y)
-        data_loss = np.mean(sample_losses)
-        return data_loss
-
-    def forward(self, y_pred, y_true):
-        '''Call during forward pass'''
-
-        samples = len(y_pred)
-        y_pred_clipped = np.clip(y_pred, 1e-7, 1-1e-7)
-
-        if len(y_true.shape) == 1:
-            correct_confidences = y_pred_clipped[range(samples), y_true]
-
-        elif len(y_true.shape) == 2:
-            correct_confidences = np.sum(y_pred_clipped*y_true, axis=1)
-
-        neg_log_likelihoods = -np.log(correct_confidences)
-        return neg_log_likelihoods
 
     def backward(self, dvalues, y_true):
         '''Call during backward pass'''
@@ -180,33 +161,6 @@ class Loss_CategoricalCrossentropy():
             y_true = np.eye(labels)[y_true]
 
         self.dinputs = -y_true/dvalues
-        self.dinputs = self.dinputs/samples
-
-
-class Activation_Softmax_Loss_CategoricalCrossentropy():
-    '''The softmax activation is applied just before the output layer,and same with  loss function,so the two are clubbed together to increase 
-    efficiency'''
-
-    def __init__(self):
-        self.activation = Activation_Softmax()
-        self.loss = Loss_CategoricalCrossentropy()
-
-    def forward(self, inputs, y_true):
-        '''Called during forward pass'''
-
-        self.activation.forward(inputs)
-        self.output = self.activation.output
-        return self.loss.calculate(self.output, y_true)
-
-    def backward(self, dvalues, y_true):
-        '''Called during backward pass'''
-
-        samples = len(dvalues)
-        if len(y_true.shape) == 2:
-            y_true = np.argmax(y_true, axis=1)
-
-        self.dinputs = dvalues.copy()
-        self.dinputs[range(samples), y_true] -= 1
         self.dinputs = self.dinputs/samples
 
 

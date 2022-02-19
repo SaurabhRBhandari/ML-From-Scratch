@@ -124,20 +124,20 @@ class Layer_Dense:
         '''Called during backward pass'''
 
         # dvalues is the derivative from the next layer
-    
-        #v=w*i+b
-        #differentiate wrt weights
-        #dv=i*dw   
+
+        # v=w*i+b
+        # differentiate wrt weights
+        # dv_dw=i
         self.dweights = np.dot(self.inputs.T, dvalues)
 
         # v=w*i+b
         # partially differentiate wrt b
-        # dv=db
+        # dv_db=1
         self.dbiases = np.sum(dvalues, axis=0, keepdims=True)
 
         # v=w*i+b
-        #partially differentiate wrt i
-        # dv=w*di
+        # partially differentiate wrt i
+        # dv_di=w
         self.dinputs = np.dot(dvalues, self.weights.T)
 
 
@@ -199,7 +199,8 @@ class Activation_Softmax:
 
 class Loss():
     '''Loss Function'''
-
+    #categorical loss=-sum(y_true*ln(y_predicted))
+    
     def backward(self, dvalues, y_true):
         '''Call during backward pass'''
 
